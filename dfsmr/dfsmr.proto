@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+service DistributedFSMRunner {
+	rpc Start (StartRequest) returns (AckReply) {}
+}
+
+
+message StartRequest {
+	string name = 1;
+}
+
+message AckReply {
+	bool success = 1;
+	string successMessage = 2;
+	string errorMessage = 3;
+}
