@@ -2,6 +2,7 @@ syntax = "proto3";
 
 service DistributedFSMRunner {
 	rpc Start (StartRequest) returns (AckReply) {}
+	rpc Changes (ChangesRequest) returns (stream ChangesReply) {}
 }
 
 
@@ -13,4 +14,13 @@ message AckReply {
 	bool success = 1;
 	string successMessage = 2;
 	string errorMessage = 3;
+}
+
+message ChangesRequest {
+
+}
+
+message ChangesReply {
+	string command = 1;
+	string client = 2;
 }

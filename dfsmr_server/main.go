@@ -21,6 +21,18 @@ func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.AckReply, 
 	return &pb.AckReply{true, "Success", ""}, nil
 }
 
+func (s *server) Changes(in *pb.ChangesRequest, stream pb.DistributedFSMRunner_ChangesServer) error {
+	msgs := []string{"a", "b", "c", "d", "e"}
+	for _, msg := range msgs {
+		packed := &pb.ChangesReply{Command: msg, Client: "who-knows"}
+		if err := stream.Send(packed); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+	
+
 func main() {
 	flag.Parse()
 	
