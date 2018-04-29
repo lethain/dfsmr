@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"time"
 
@@ -9,12 +10,13 @@ import (
 	pb "github.com/lethain/dfsmr/dfsmr"
 )
 
-const (
-	address     = "localhost:5003"
+var (
+	addr = flag.String("addr", "localhost:5003", "Address to connect to")
 )
 
 func main() {
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	flag.Parse()
+	conn, err := grpc.Dial(*addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)	
 	}
