@@ -38,6 +38,31 @@ func start(args []string, c pb.DistributedFSMRunnerClient) {
 
 }
 
+func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
+	ctx := context.Background()
+	stream, err := c.Changes(ctx, &pb.ChangesRequest{})
+	if err != nil {
+		log.Fatalf("could not start: %v", err)
+	}
+	for {
+		change, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			grpcConn.Close()
+			grpcConn, c, _ = client()
+			if status.Code(err) == codes.Unavailable {
+				time.Sleep(1.0)
+				continue
+			} else {
+				log.Fatalf("%v.Changes() = %v", c, err)
+			}
+		}
+		log.Printf("%v %v", change.Client, change.Command)
+	}		
+}
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
@@ -54,32 +79,6 @@ func main() {
 	case "start":
 		start(args, c)
 	case "changes":
-		ctx := context.Background()
-		stream, err := c.Changes(ctx, &pb.ChangesRequest{})
-		if err != nil {
-			log.Fatalf("could not start: %v", err)
-		}
-		for {
-			change, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				grpcConn.Close()
-				grpcConn, c, _ = client()
-				if status.Code(err) == codes.Unavailable {
-					time.Sleep(1.0)
-					continue
-				} else {
-					log.Fatalf("%v.Changes() = %v", c, err)
-				}
-			}
-			log.Printf("%v %v", change.Client, change.Command)
-		}
+		changes(grpcConn, c)
 	}
-
-
-
-
-
 }
