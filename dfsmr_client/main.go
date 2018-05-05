@@ -23,31 +23,36 @@ func client() (*grpc.ClientConn, pb.DistributedFSMRunnerClient, error) {
 	return conn, fcli, err
 }
 
+func start(args []string, c pb.DistributedFSMRunnerClient) {
+	name := "test-client"
+	if len(args) > 1 {
+		name = args[1]
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.Start(ctx, &pb.StartRequest{Name: name})
+	if err != nil {
+		log.Fatalf("could not start: %v", err)
+	}
+	log.Printf("Started %v", r)
+
+}
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
-
+	if len(args) == 0 {
+		log.Fatalf("must specify at least one parameters, specified %v", len(args))
+	}
+	
 	grpcConn, c, err := client()
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	if len(args) == 0 {
-		log.Fatalf("must specify at least one parameters, specified %v", len(args))
-	}
 	switch args[0] {
 	case "start":
-		name := "test-client"
-		if len(args) > 1 {
-			name = args[1]
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		r, err := c.Start(ctx, &pb.StartRequest{Name: name})
-		if err != nil {
-			log.Fatalf("could not start: %v", err)
-		}
-		log.Printf("Started %v", r)
+		start(args, c)
 	case "changes":
 		ctx := context.Background()
 		stream, err := c.Changes(ctx, &pb.ChangesRequest{})
