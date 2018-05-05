@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	
+	"github.com/lethain/dfsmr/machines"
 	pb "github.com/lethain/dfsmr/dfsmr"
 )
 
@@ -35,6 +37,28 @@ func start(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not start: %v", err)
 	}
 	log.Printf("Started %v", r)
+
+}
+
+func define(args []string, c pb.DistributedFSMRunnerClient) {
+	if len(args) == 0 {
+		log.Fatalf("must specify a YAML file to load: %v", args)
+	}
+	path := args[1]
+	machine, err := machines.FromFile(path)
+	if err != nil {
+		log.Fatalf("Failed to load machine at %v: %v", path, err)
+	}
+	dr := machines.AsDefineRequest(machine)
+	log.Printf("%+v", dr)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.Define(ctx, dr)
+	if err != nil {
+		log.Fatalf("could not define: %v", err)
+	}
+	log.Printf("Defined %v", r)	
 
 }
 
@@ -91,6 +115,8 @@ func main() {
 	switch args[0] {
 	case "start":
 		start(args, c)
+	case "define":
+		define(args, c)		
 	case "changes":
 		changes(grpcConn, c)
 	}

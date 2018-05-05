@@ -28,6 +28,7 @@ type server struct{
 func MakeServer() *server {
 	srv := &server{}
 	srv.changes = make(chan *pb.ChangesReply)
+	srv.machinesMutex = &sync.RWMutex{}
 	return srv
 }
 
