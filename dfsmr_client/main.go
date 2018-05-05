@@ -9,6 +9,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/codes"
 	pb "github.com/lethain/dfsmr/dfsmr"
 )
 
@@ -16,23 +17,22 @@ var (
 	addr = flag.String("addr", "localhost:5003", "Address to connect to")
 )
 
-func client() pb.DistributedFSMRunnerClient {
+func client() (*grpc.ClientConn, pb.DistributedFSMRunnerClient, error) {
 	conn, err := grpc.Dial(*addr, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	return pb.NewDistributedFSMRunnerClient(conn)
+	fcli := pb.NewDistributedFSMRunnerClient(conn)
+	return conn, fcli, err
 }
 
 func main() {
 	flag.Parse()
 	args := flag.Args()
 
-	c := client()
-	//defer conn.Close()
+	grpcConn, c, err := client()
+	if err != nil {
+		log.Fatalf("%v", err)
+	}
 
-	
-	if len(args) == 0 {		
+	if len(args) == 0 {
 		log.Fatalf("must specify at least one parameters, specified %v", len(args))
 	}
 	switch args[0] {
@@ -42,12 +42,12 @@ func main() {
 			name = args[1]
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()		
+		defer cancel()
 		r, err := c.Start(ctx, &pb.StartRequest{Name: name})
 		if err != nil {
 			log.Fatalf("could not start: %v", err)
 		}
-		log.Printf("Started %v", r)		
+		log.Printf("Started %v", r)
 	case "changes":
 		ctx := context.Background()
 		stream, err := c.Changes(ctx, &pb.ChangesRequest{})
@@ -60,16 +60,21 @@ func main() {
 				break
 			}
 			if err != nil {
-				log.Printf("status: %v", status.Code(err))
-				
-				log.Fatalf("%v.Changes() = %v", c, err)
+				grpcConn.Close()
+				grpcConn, c, _ = client()
+				if status.Code(err) == codes.Unavailable {
+					time.Sleep(1.0)
+					continue
+				} else {
+					log.Fatalf("%v.Changes() = %v", c, err)
+				}
 			}
 			log.Printf("%v %v", change.Client, change.Command)
 		}
 	}
-	
-	
-	
+
+
+
 
 
 }
