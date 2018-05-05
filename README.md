@@ -1,9 +1,16 @@
 
-
 Vocabulary:
 - Machine: a defined finite state machine, including its nodes, transitions, inputs and configuration
 - Instance: is a specific invocation of a Machine, triggered by `start` command
 - Worker: external process that calls the `ready` command to request work
+
+## Commands
+
+* Define: machine_config
+* Start: machine, id, context
+* Transition: id, transition, input
+* Relinquish: id
+* Ready: machine, allowed_transitions, max_batch_size
 
 ## Handling instance failure: timeouts and retries
 
@@ -130,15 +137,6 @@ there are also these system nodes added to every machine:
 two modes:
 1. standalone local mode, uses leveldb for storage, no other dependencies
 2. distributed mode, uses Kafka
-
-
-
-## Operations
-
-* Start: machine, id, context
-* Transition: id, transition, input
-* Relinquish: id
-* Ready: machine, allowed_transitions, max_batch_size
 
 ## Running server
 

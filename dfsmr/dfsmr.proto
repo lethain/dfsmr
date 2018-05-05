@@ -1,8 +1,32 @@
 syntax = "proto3";
 
 service DistributedFSMRunner {
+	rpc Define (DefineRequest) returns (DefineReply) {}
 	rpc Start (StartRequest) returns (AckReply) {}
 	rpc Changes (ChangesRequest) returns (stream ChangesReply) {}
+}
+
+message Transition {
+	string node = 1;
+	string name = 2;
+}
+
+message Node {
+	string name = 1;
+	repeated Transition transitions = 2;
+}
+
+message DefineRequest {
+	string name = 1;
+	repeated Node nodes = 2;
+}
+
+
+message DefineReply {
+	bool success = 1;
+	string name = 2;
+	string successMessage = 3;	
+	string errorMessage = 4;
 }
 
 
@@ -24,3 +48,4 @@ message ChangesReply {
 	string command = 1;
 	string client = 2;
 }
+

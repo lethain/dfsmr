@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"flag"
 	"log"
 	"net"
+	"sync"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -19,6 +21,8 @@ var (
 
 type server struct{
 	changes chan *pb.ChangesReply
+	machines []*pb.DefineRequest
+	machinesMutex *sync.RWMutex
 }
 
 func MakeServer() *server {
@@ -27,23 +31,47 @@ func MakeServer() *server {
 	return srv
 }
 
+func (s *server) RegisterMachine(machine *pb.DefineRequest) {
+	s.machinesMutex.Lock()
+	s.machines = append(s.machines, machine)
+	s.machinesMutex.Unlock()
+}
 
-func (s *server) record(ctx context.Context, cmd string) error {
+func (s *server) Machines() []*pb.DefineRequest {
+	s.machinesMutex.RLock()
+	defer s.machinesMutex.RUnlock()
+	return s.machines
+}
+
+
+func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 	client := "unknown"
 	p, ok := peer.FromContext(ctx)
 	if ok {
 		client = p.Addr.Network() + "://" + p.Addr.String()
 	}
-	s.changes <- &pb.ChangesReply{Command: cmd, Client: client}
+	cmdStr := fmt.Sprintf("%s %+v", op, cmd)
+	s.changes <- &pb.ChangesReply{Command: cmdStr, Client: client}
 	return nil
 }
 
 func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.AckReply, error) {
-	if err := s.record(ctx, in.Name); err != nil {
+	if err := s.record(ctx, "Start", in); err != nil {
 		return nil, err
 	}
 	return &pb.AckReply{true, "Success", ""}, nil
 }
+
+func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.DefineReply, error) {
+	name := machine.Name
+	if err := s.record(ctx, "Define", machine); err != nil {
+		return nil, err
+	}
+	s.RegisterMachine(machine)
+	return &pb.DefineReply{true, name, "Created machine.", ""}, nil
+}
+
+
 
 func (s *server) Changes(in *pb.ChangesRequest, stream pb.DistributedFSMRunner_ChangesServer) error {
 	for msg := range s.changes {

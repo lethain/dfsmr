@@ -8,6 +8,10 @@ It is generated from these files:
 	dfsmr.proto
 
 It has these top-level messages:
+	Transition
+	Node
+	DefineRequest
+	DefineReply
 	StartRequest
 	AckReply
 	ChangesRequest
@@ -35,6 +39,118 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type Transition struct {
+	Node string `protobuf:"bytes,1,opt,name=node" json:"node,omitempty"`
+	Name string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+}
+
+func (m *Transition) Reset()                    { *m = Transition{} }
+func (m *Transition) String() string            { return proto.CompactTextString(m) }
+func (*Transition) ProtoMessage()               {}
+func (*Transition) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+func (m *Transition) GetNode() string {
+	if m != nil {
+		return m.Node
+	}
+	return ""
+}
+
+func (m *Transition) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type Node struct {
+	Name        string        `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Transitions []*Transition `protobuf:"bytes,2,rep,name=transitions" json:"transitions,omitempty"`
+}
+
+func (m *Node) Reset()                    { *m = Node{} }
+func (m *Node) String() string            { return proto.CompactTextString(m) }
+func (*Node) ProtoMessage()               {}
+func (*Node) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *Node) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Node) GetTransitions() []*Transition {
+	if m != nil {
+		return m.Transitions
+	}
+	return nil
+}
+
+type DefineRequest struct {
+	Name  string  `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Nodes []*Node `protobuf:"bytes,2,rep,name=nodes" json:"nodes,omitempty"`
+}
+
+func (m *DefineRequest) Reset()                    { *m = DefineRequest{} }
+func (m *DefineRequest) String() string            { return proto.CompactTextString(m) }
+func (*DefineRequest) ProtoMessage()               {}
+func (*DefineRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *DefineRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *DefineRequest) GetNodes() []*Node {
+	if m != nil {
+		return m.Nodes
+	}
+	return nil
+}
+
+type DefineReply struct {
+	Success        bool   `protobuf:"varint,1,opt,name=success" json:"success,omitempty"`
+	Name           string `protobuf:"bytes,2,opt,name=name" json:"name,omitempty"`
+	SuccessMessage string `protobuf:"bytes,3,opt,name=successMessage" json:"successMessage,omitempty"`
+	ErrorMessage   string `protobuf:"bytes,4,opt,name=errorMessage" json:"errorMessage,omitempty"`
+}
+
+func (m *DefineReply) Reset()                    { *m = DefineReply{} }
+func (m *DefineReply) String() string            { return proto.CompactTextString(m) }
+func (*DefineReply) ProtoMessage()               {}
+func (*DefineReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *DefineReply) GetSuccess() bool {
+	if m != nil {
+		return m.Success
+	}
+	return false
+}
+
+func (m *DefineReply) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *DefineReply) GetSuccessMessage() string {
+	if m != nil {
+		return m.SuccessMessage
+	}
+	return ""
+}
+
+func (m *DefineReply) GetErrorMessage() string {
+	if m != nil {
+		return m.ErrorMessage
+	}
+	return ""
+}
+
 type StartRequest struct {
 	Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
 }
@@ -42,7 +158,7 @@ type StartRequest struct {
 func (m *StartRequest) Reset()                    { *m = StartRequest{} }
 func (m *StartRequest) String() string            { return proto.CompactTextString(m) }
 func (*StartRequest) ProtoMessage()               {}
-func (*StartRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*StartRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *StartRequest) GetName() string {
 	if m != nil {
@@ -60,7 +176,7 @@ type AckReply struct {
 func (m *AckReply) Reset()                    { *m = AckReply{} }
 func (m *AckReply) String() string            { return proto.CompactTextString(m) }
 func (*AckReply) ProtoMessage()               {}
-func (*AckReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*AckReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *AckReply) GetSuccess() bool {
 	if m != nil {
@@ -89,7 +205,7 @@ type ChangesRequest struct {
 func (m *ChangesRequest) Reset()                    { *m = ChangesRequest{} }
 func (m *ChangesRequest) String() string            { return proto.CompactTextString(m) }
 func (*ChangesRequest) ProtoMessage()               {}
-func (*ChangesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*ChangesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 type ChangesReply struct {
 	Command string `protobuf:"bytes,1,opt,name=command" json:"command,omitempty"`
@@ -99,7 +215,7 @@ type ChangesReply struct {
 func (m *ChangesReply) Reset()                    { *m = ChangesReply{} }
 func (m *ChangesReply) String() string            { return proto.CompactTextString(m) }
 func (*ChangesReply) ProtoMessage()               {}
-func (*ChangesReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (*ChangesReply) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *ChangesReply) GetCommand() string {
 	if m != nil {
@@ -116,6 +232,10 @@ func (m *ChangesReply) GetClient() string {
 }
 
 func init() {
+	proto.RegisterType((*Transition)(nil), "Transition")
+	proto.RegisterType((*Node)(nil), "Node")
+	proto.RegisterType((*DefineRequest)(nil), "DefineRequest")
+	proto.RegisterType((*DefineReply)(nil), "DefineReply")
 	proto.RegisterType((*StartRequest)(nil), "StartRequest")
 	proto.RegisterType((*AckReply)(nil), "AckReply")
 	proto.RegisterType((*ChangesRequest)(nil), "ChangesRequest")
@@ -133,6 +253,7 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for DistributedFSMRunner service
 
 type DistributedFSMRunnerClient interface {
+	Define(ctx context.Context, in *DefineRequest, opts ...grpc.CallOption) (*DefineReply, error)
 	Start(ctx context.Context, in *StartRequest, opts ...grpc.CallOption) (*AckReply, error)
 	Changes(ctx context.Context, in *ChangesRequest, opts ...grpc.CallOption) (DistributedFSMRunner_ChangesClient, error)
 }
@@ -143,6 +264,15 @@ type distributedFSMRunnerClient struct {
 
 func NewDistributedFSMRunnerClient(cc *grpc.ClientConn) DistributedFSMRunnerClient {
 	return &distributedFSMRunnerClient{cc}
+}
+
+func (c *distributedFSMRunnerClient) Define(ctx context.Context, in *DefineRequest, opts ...grpc.CallOption) (*DefineReply, error) {
+	out := new(DefineReply)
+	err := grpc.Invoke(ctx, "/DistributedFSMRunner/Define", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *distributedFSMRunnerClient) Start(ctx context.Context, in *StartRequest, opts ...grpc.CallOption) (*AckReply, error) {
@@ -189,12 +319,31 @@ func (x *distributedFSMRunnerChangesClient) Recv() (*ChangesReply, error) {
 // Server API for DistributedFSMRunner service
 
 type DistributedFSMRunnerServer interface {
+	Define(context.Context, *DefineRequest) (*DefineReply, error)
 	Start(context.Context, *StartRequest) (*AckReply, error)
 	Changes(*ChangesRequest, DistributedFSMRunner_ChangesServer) error
 }
 
 func RegisterDistributedFSMRunnerServer(s *grpc.Server, srv DistributedFSMRunnerServer) {
 	s.RegisterService(&_DistributedFSMRunner_serviceDesc, srv)
+}
+
+func _DistributedFSMRunner_Define_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DefineRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DistributedFSMRunnerServer).Define(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/DistributedFSMRunner/Define",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DistributedFSMRunnerServer).Define(ctx, req.(*DefineRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _DistributedFSMRunner_Start_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -241,6 +390,10 @@ var _DistributedFSMRunner_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*DistributedFSMRunnerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "Define",
+			Handler:    _DistributedFSMRunner_Define_Handler,
+		},
+		{
 			MethodName: "Start",
 			Handler:    _DistributedFSMRunner_Start_Handler,
 		},
@@ -258,20 +411,26 @@ var _DistributedFSMRunner_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("dfsmr.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 230 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x90, 0xcb, 0x4e, 0xc3, 0x30,
-	0x10, 0x45, 0x1b, 0x1e, 0x7d, 0x0c, 0x69, 0x8a, 0x46, 0x15, 0xaa, 0x2a, 0x16, 0xc8, 0x6c, 0xd8,
-	0x60, 0x10, 0x7c, 0x01, 0x02, 0x21, 0xb1, 0xe8, 0x26, 0xfd, 0x02, 0xd7, 0x19, 0x4a, 0xa0, 0x71,
-	0xca, 0x8c, 0xbd, 0xe0, 0xef, 0x11, 0xae, 0x8b, 0xd2, 0xed, 0xb5, 0x7c, 0xcf, 0xb9, 0x03, 0x67,
-	0xd5, 0xbb, 0x34, 0xac, 0xb7, 0xdc, 0xfa, 0x56, 0x5d, 0x42, 0xbe, 0xf4, 0x86, 0x7d, 0x49, 0xdf,
-	0x81, 0xc4, 0x63, 0x0e, 0x27, 0xce, 0x34, 0x34, 0xcb, 0xae, 0xb2, 0x9b, 0x91, 0x7a, 0x83, 0xe1,
-	0x93, 0xfd, 0x2a, 0x69, 0xbb, 0xf9, 0xc1, 0x09, 0x0c, 0x24, 0x58, 0x4b, 0x22, 0xf1, 0x71, 0x88,
-	0x17, 0x50, 0xa4, 0x60, 0x41, 0x22, 0x66, 0x4d, 0xb3, 0xa3, 0xbf, 0x4f, 0x38, 0x85, 0x9c, 0x98,
-	0x5b, 0xde, 0xa7, 0xc7, 0xb1, 0xea, 0x1c, 0x8a, 0xe7, 0x0f, 0xe3, 0xd6, 0x24, 0x09, 0xa5, 0xee,
-	0x20, 0xff, 0x4f, 0x12, 0xc0, 0xb6, 0x4d, 0x63, 0x5c, 0xb5, 0xa3, 0x63, 0x01, 0x7d, 0xbb, 0xa9,
-	0xc9, 0xf9, 0x5d, 0xf1, 0xc3, 0x27, 0x4c, 0x5f, 0x6a, 0xf1, 0x5c, 0xaf, 0x82, 0xa7, 0xea, 0x75,
-	0xb9, 0x28, 0x83, 0x73, 0xc4, 0x78, 0x0d, 0xa7, 0x71, 0x03, 0x8e, 0x75, 0x77, 0xcb, 0x7c, 0xa4,
-	0xf7, 0xf2, 0xaa, 0x87, 0xb7, 0x30, 0x48, 0x34, 0x9c, 0xe8, 0x43, 0x93, 0xf9, 0x58, 0x77, 0x45,
-	0x54, 0xef, 0x3e, 0x5b, 0xf5, 0xe3, 0x79, 0x1e, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0xb9, 0xbe,
-	0x4d, 0xb5, 0x2d, 0x01, 0x00, 0x00,
+	// 327 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x92, 0xcf, 0x4e, 0xf2, 0x40,
+	0x14, 0xc5, 0x29, 0xff, 0xb9, 0x2d, 0xe5, 0xcb, 0x84, 0x7c, 0x69, 0x88, 0x0b, 0x32, 0x6e, 0xba,
+	0x71, 0x34, 0x90, 0xb8, 0x37, 0x12, 0x13, 0x17, 0xb8, 0x00, 0x57, 0xee, 0x4a, 0x7b, 0xc1, 0x89,
+	0x74, 0x06, 0x67, 0xa6, 0x0b, 0xdf, 0xc3, 0x07, 0x36, 0x0c, 0x53, 0xa4, 0x8a, 0xcb, 0x7b, 0xdb,
+	0x7b, 0x7e, 0xe7, 0x9c, 0x0c, 0xf8, 0xd9, 0x5a, 0xe7, 0x8a, 0xed, 0x94, 0x34, 0x92, 0xc6, 0x00,
+	0xcf, 0x2a, 0x11, 0x9a, 0x1b, 0x2e, 0x05, 0x09, 0xa0, 0x29, 0x64, 0x86, 0x91, 0x37, 0xf6, 0xe2,
+	0x9e, 0x9d, 0x92, 0x1c, 0xa3, 0xfa, 0x7e, 0xa2, 0xb7, 0xd0, 0x7c, 0x92, 0x19, 0x1e, 0xb7, 0x87,
+	0x7f, 0xc6, 0xe0, 0x9b, 0xe3, 0xbd, 0x8e, 0xea, 0xe3, 0x46, 0xec, 0x4f, 0x7c, 0xf6, 0xad, 0x49,
+	0xa7, 0xd0, 0x9f, 0xe1, 0x9a, 0x0b, 0x5c, 0xe0, 0x7b, 0x81, 0xda, 0xfc, 0x10, 0x18, 0x42, 0x6b,
+	0x8f, 0x2c, 0x4f, 0x5b, 0x6c, 0x0f, 0xa1, 0x2f, 0xe0, 0x97, 0x47, 0xbb, 0xed, 0x07, 0x19, 0x40,
+	0x47, 0x17, 0x69, 0x8a, 0x5a, 0xdb, 0xab, 0x6e, 0xd5, 0x1a, 0xf9, 0x0f, 0xa1, 0xfb, 0x3c, 0x47,
+	0xad, 0x93, 0x0d, 0x46, 0x0d, 0xa7, 0x1d, 0xa0, 0x52, 0x52, 0x95, 0xdb, 0xa6, 0x0d, 0x72, 0x01,
+	0xc1, 0xd2, 0x24, 0xca, 0x9c, 0xf5, 0x43, 0x1f, 0xa1, 0x7b, 0x97, 0xbe, 0xfd, 0x81, 0xfd, 0x0d,
+	0xaa, 0x9f, 0x05, 0x59, 0x3c, 0xfd, 0x07, 0xe1, 0xfd, 0x6b, 0x22, 0x36, 0xa8, 0x1d, 0x8a, 0x5e,
+	0x43, 0x70, 0xdc, 0x38, 0x40, 0x2a, 0xf3, 0x3c, 0x11, 0x99, 0x6b, 0x23, 0x84, 0x76, 0xba, 0xe5,
+	0x28, 0xcc, 0x41, 0x78, 0xf2, 0xe9, 0xc1, 0x70, 0xc6, 0xb5, 0x51, 0x7c, 0x55, 0x18, 0xcc, 0x1e,
+	0x96, 0xf3, 0x45, 0x21, 0x04, 0x2a, 0x12, 0x43, 0xfb, 0x50, 0x10, 0x09, 0x59, 0xa5, 0xde, 0x51,
+	0xc0, 0x4e, 0x9a, 0xa3, 0x35, 0x72, 0x09, 0x2d, 0x1b, 0x97, 0xf4, 0xd9, 0x69, 0xec, 0x51, 0x8f,
+	0x95, 0x39, 0x69, 0x8d, 0x5c, 0x41, 0xc7, 0x19, 0x23, 0x03, 0x56, 0x35, 0x3d, 0xea, 0xb3, 0x53,
+	0xcf, 0xb4, 0x76, 0xe3, 0xad, 0xda, 0xf6, 0xf1, 0x4c, 0xbf, 0x02, 0x00, 0x00, 0xff, 0xff, 0xd4,
+	0x5d, 0x9e, 0xd4, 0x4b, 0x02, 0x00, 0x00,
 }

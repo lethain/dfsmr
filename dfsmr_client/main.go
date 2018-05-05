@@ -56,7 +56,7 @@ func main() {
 			if err != nil {
 				log.Fatalf("%v.Changes() = %v", c, err)
 			}
-			log.Printf("%v", change)
+			log.Printf("%v %v", change.Client, change.Command)
 		}
 	}
 	
