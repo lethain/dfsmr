@@ -39,28 +39,41 @@ func start(args []string, c pb.DistributedFSMRunnerClient) {
 }
 
 func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
-	ctx := context.Background()
-	stream, err := c.Changes(ctx, &pb.ChangesRequest{})
-	if err != nil {
-		log.Fatalf("could not start: %v", err)
-	}
 	for {
-		change, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
+		ctx := context.Background()
+		stream, err := c.Changes(ctx, &pb.ChangesRequest{})
+		code := status.Code(err)
+
+		if code == codes.Unavailable || code == codes.Canceled || code == codes.Aborted {
+			time.Sleep(1.0)
 			grpcConn.Close()
 			grpcConn, c, _ = client()
-			if status.Code(err) == codes.Unavailable {
-				time.Sleep(1.0)
-				continue
-			} else {
-				log.Fatalf("%v.Changes() = %v", c, err)
-			}
+			continue
 		}
-		log.Printf("%v %v", change.Client, change.Command)
-	}		
+
+		if err != nil {
+			log.Fatalf("could not start: %v", err)
+		}
+
+		var streamErr error
+		for {
+			change, streamErr := stream.Recv()
+			if streamErr == io.EOF {
+				return
+			}
+			if streamErr != nil {
+				break
+			}
+			log.Printf("%v %v", change.Client, change.Command)
+		}
+
+		streamCode := status.Code(streamErr)
+		if streamErr == nil || streamCode == codes.Unavailable || streamCode == codes.Canceled || streamCode == codes.Aborted {
+			continue
+		} else {
+			log.Fatalf("%v.Changes() = %v", c, streamErr)
+		}
+	}
 }
 
 func main() {
@@ -69,7 +82,7 @@ func main() {
 	if len(args) == 0 {
 		log.Fatalf("must specify at least one parameters, specified %v", len(args))
 	}
-	
+
 	grpcConn, c, err := client()
 	if err != nil {
 		log.Fatalf("%v", err)
