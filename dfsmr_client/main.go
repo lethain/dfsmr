@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 	pb "github.com/lethain/dfsmr/dfsmr"
 )
 
@@ -15,17 +16,22 @@ var (
 	addr = flag.String("addr", "localhost:5003", "Address to connect to")
 )
 
-func main() {
-	flag.Parse()
-	args := flag.Args()
-
+func client() pb.DistributedFSMRunnerClient {
 	conn, err := grpc.Dial(*addr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	defer conn.Close()
+	return pb.NewDistributedFSMRunnerClient(conn)
+}
 
-	c := pb.NewDistributedFSMRunnerClient(conn)
+func main() {
+	flag.Parse()
+	args := flag.Args()
+
+	c := client()
+	//defer conn.Close()
+
+	
 	if len(args) == 0 {		
 		log.Fatalf("must specify at least one parameters, specified %v", len(args))
 	}
@@ -54,6 +60,8 @@ func main() {
 				break
 			}
 			if err != nil {
+				log.Printf("status: %v", status.Code(err))
+				
 				log.Fatalf("%v.Changes() = %v", c, err)
 			}
 			log.Printf("%v %v", change.Client, change.Command)
