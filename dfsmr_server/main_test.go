@@ -101,11 +101,30 @@ func TestStart(t *testing.T) {
 		t.Error("failed to define ", err)
 	}
 
+	// shouldn't be an instances
+	instances, err := s.Instances(ctx, &pb.InstancesRequest{})
+	if err != nil {
+		t.Error("should be able to retrieve instance ", err)
+	}
+	if len(instances.Instances) != 0 {
+		t.Error("shouldnt be any instances ", instances)
+	}
+	
+
 	// start should work for a registered machine
 	_, err = s.Start(ctx, sr)
 	if err != nil {
 		t.Error("start request should have succeeded ", err)
 	}
+
+	// instances
+	instances, err = s.Instances(ctx, &pb.InstancesRequest{})
+	if err != nil {
+		t.Error("should be able to retrieve instance ", err)
+	}
+	if len(instances.Instances) != 1 {
+		t.Error("should be one instance ", instances)
+	}	
 
 
 }

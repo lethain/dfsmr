@@ -21,34 +21,43 @@ var (
 
 type server struct{
 	listeners []chan *pb.ChangesReply
+	changesMutex *sync.RWMutex	
 	machines []*pb.DefineRequest
-	machinesMutex *sync.RWMutex
-	changesMutex *sync.RWMutex
+	machinesMutex *sync.RWMutex	
+	instances []*pb.StartRequest
+	instancesMutex *sync.RWMutex
 }
 
 func MakeServer() *server {
 	srv := &server{}
 	srv.machinesMutex = &sync.RWMutex{}
 	srv.changesMutex = &sync.RWMutex{}
+	srv.instancesMutex = &sync.RWMutex{}
 	return srv
 }
 
 func (s *server) RegisterMachine(newMachine *pb.DefineRequest) error {
 	s.machinesMutex.Lock()
-	defer s.machinesMutex.Unlock()
-	for _, machine := range s.machines {
-		if newMachine.Name == machine.Name {
-			return fmt.Errorf("Machine %v is already registered", newMachine.Name)
-		}
+	if s.doesMachineExist(newMachine.Name, true) {
+		return fmt.Errorf("Machine %v is already registered", newMachine.Name)
 	}
 	s.machines = append(s.machines, newMachine)
+	s.machinesMutex.Unlock()
 	return nil
 }
 
 func (s *server) Machines(ctx context.Context, mr *pb.MachinesRequest) (*pb.MachinesReply, error) {
 	s.machinesMutex.RLock()
-	defer s.machinesMutex.RUnlock()
-	return &pb.MachinesReply{Machines: s.machines}, nil
+	ms := s.machines[:]
+	s.machinesMutex.RUnlock()
+	return &pb.MachinesReply{Machines: ms}, nil
+}
+
+func (s *server) Instances(ctx context.Context, ir *pb.InstancesRequest) (*pb.InstancesReply, error) {
+	s.instancesMutex.RLock()
+	is := s.instances[:]
+	s.instancesMutex.RUnlock()
+	return &pb.InstancesReply{Instances: is}, nil
 }
 
 func (s *server) changeListener() chan *pb.ChangesReply {
@@ -88,20 +97,30 @@ func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 	return nil
 }
 
-func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.AckReply, error) {
-	s.machinesMutex.RLock()
-	defer s.machinesMutex.RUnlock()
-
+func (s *server) doesMachineExist(name string, hasLock bool) bool {
+	if !hasLock {
+		s.machinesMutex.RLock()
+		defer s.machinesMutex.RUnlock()
+	}
 	for _, m := range s.machines {
-		if m.Name == in.Name {
-			if err := s.record(ctx, "Start", in); err != nil {
-				return nil, err
-			}
-			return &pb.AckReply{true, "Success", ""}, nil
+		if name == m.Name {
+			return true
 		}
 	}
-	return nil, fmt.Errorf("No machine registered for %v", in.Name)
-	
+	return false
+}
+
+func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.AckReply, error) {
+	if !s.doesMachineExist(in.Name, false) {
+		return nil, fmt.Errorf("No machine registered for %v", in.Name)
+	}
+	s.instancesMutex.Lock()
+	s.instances = append(s.instances, in)
+	s.instancesMutex.Unlock()	
+	if err := s.record(ctx, "Start", in); err != nil {
+		return nil, err
+	}
+	return &pb.AckReply{true, "Success", ""}, nil
 }
 
 func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.DefineReply, error) {
