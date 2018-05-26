@@ -37,23 +37,37 @@ func TestDefineMachine(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	//path := "../crawl.fsm.yaml"
+	path := "../crawl.fsm.yaml"
 
+	// create server
 	s := MakeServer()
-	sr := &pb.StartRequest{}
+	ctx := context.Background()	
 
-	ctx := context.Background()
-	_, err := s.Start(ctx, sr)
-	if err == nil {
-		t.Error("Invalid start request, should have failed ", sr)
-	}
-
-	/*
+	// load a machine
 	m, err := machines.FromFile(path)
 	if err != nil {
 		t.Error("failed to load machine from ", path, err)
 	}
-*/
+	dr := machines.AsDefineRequest(m)
+
+	// start for non-existant machine should fail
+	sr := &pb.StartRequest{Name: m.Name}	
+	_, err = s.Start(ctx, sr)
+	if err == nil {
+		t.Error("Invalid start request, should have failed ", sr)
+	}
+
+	// define a machine
+	_, err = s.Define(ctx, dr)
+	if err != nil {
+		t.Error("failed to define ", err)
+	}
+
+	// start should work for a registered machine
+	_, err = s.Start(ctx, sr)
+	if err != nil {
+		t.Error("start request should have succeeded ", err)
+	}
 	
 
 }
