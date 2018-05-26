@@ -33,10 +33,16 @@ func MakeServer() *server {
 	return srv
 }
 
-func (s *server) RegisterMachine(machine *pb.DefineRequest) {
+func (s *server) RegisterMachine(newMachine *pb.DefineRequest) error {
 	s.machinesMutex.Lock()
-	s.machines = append(s.machines, machine)
-	s.machinesMutex.Unlock()
+	defer s.machinesMutex.Unlock()
+	for _, machine := range s.machines {
+		if newMachine.Name == machine.Name {
+			return fmt.Errorf("Machine %v is already registered", newMachine.Name)
+		}
+	}
+	s.machines = append(s.machines, newMachine)
+	return nil
 }
 
 func (s *server) Machines() []*pb.DefineRequest {
@@ -83,10 +89,19 @@ func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 }
 
 func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.AckReply, error) {
-	if err := s.record(ctx, "Start", in); err != nil {
-		return nil, err
+	s.machinesMutex.RLock()
+	defer s.machinesMutex.RUnlock()
+
+	for _, m := range s.machines {
+		if m.Name == in.Name {
+			if err := s.record(ctx, "Start", in); err != nil {
+				return nil, err
+			}
+			return &pb.AckReply{true, "Success", ""}, nil
+		}
 	}
-	return &pb.AckReply{true, "Success", ""}, nil
+	return nil, fmt.Errorf("No machine registered for %v", in.Name)
+	
 }
 
 func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.DefineReply, error) {
@@ -94,7 +109,10 @@ func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.Def
 	if err := s.record(ctx, "Define", machine); err != nil {
 		return nil, err
 	}
-	s.RegisterMachine(machine)
+	err := s.RegisterMachine(machine)
+	if err != nil {
+		return nil, err
+	}
 	return &pb.DefineReply{true, name, "Created machine.", ""}, nil
 }
 
