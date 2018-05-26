@@ -45,10 +45,10 @@ func (s *server) RegisterMachine(newMachine *pb.DefineRequest) error {
 	return nil
 }
 
-func (s *server) Machines() []*pb.DefineRequest {
+func (s *server) Machines(ctx context.Context, mr *pb.MachinesRequest) (*pb.MachinesReply, error) {
 	s.machinesMutex.RLock()
 	defer s.machinesMutex.RUnlock()
-	return s.machines
+	return &pb.MachinesReply{Machines: s.machines}, nil
 }
 
 func (s *server) changeListener() chan *pb.ChangesReply {

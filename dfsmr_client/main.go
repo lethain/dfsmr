@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
-	
+
 	"github.com/lethain/dfsmr/machines"
 	pb "github.com/lethain/dfsmr/dfsmr"
 )
@@ -40,11 +40,22 @@ func start(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not start: %v", err)
 	}
 	log.Printf("Started %v", r)
+}
 
+func getMachines(args []string, c pb.DistributedFSMRunnerClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.Machines(ctx, &pb.MachinesRequest{})
+	if err != nil {
+		log.Fatalf("could not retrieve machines: %v", err)
+	}
+	for _, m := range r.Machines {
+		log.Printf("%v:\t%v", m.Name, m.Nodes)
+	}
 }
 
 func define(args []string, c pb.DistributedFSMRunnerClient) {
-	if len(args) == 0 {
+	if len(args) < 2 {
 		log.Fatalf("must specify a YAML file to load: %v", args)
 	}
 	path := args[1]
@@ -61,8 +72,7 @@ func define(args []string, c pb.DistributedFSMRunnerClient) {
 	if err != nil {
 		log.Fatalf("could not define: %v", err)
 	}
-	log.Printf("Defined %v", r)	
-
+	log.Printf("Defined %v", r)
 }
 
 func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
@@ -105,18 +115,18 @@ func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
 
 func main() {
 	flag.Usage = func() {
-		cmds := []string{"start", "define", "changes"}
+		cmds := []string{"start", "define", "changes", "machines"}
 		inCmdArr := []string{}
 		if len(os.Args) > 0 {
 			inCmdArr = os.Args[1:len(os.Args)]
 		}
 		inCmd := strings.Join(inCmdArr, " ")
 		validCmds := strings.Join(cmds, ", ")
-		
+
 		fmt.Fprintf(os.Stderr, "Specified command was: %v\nValid commands are: %v\n", inCmd, validCmds)
 		flag.PrintDefaults()
 	}
-		
+
 	flag.Parse()
 	args := flag.Args()
 	if len(args) == 0 {
@@ -132,9 +142,11 @@ func main() {
 	case "start":
 		start(args, c)
 	case "define":
-		define(args, c)		
+		define(args, c)
 	case "changes":
 		changes(grpcConn, c)
+	case "machines":
+		getMachines(args, c)
 	default:
 		flag.Usage()
 	}

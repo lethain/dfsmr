@@ -50,6 +50,9 @@ func TestStart(t *testing.T) {
 	}
 	dr := machines.AsDefineRequest(m)
 
+	// there should be no machines
+	//ms := s.Machines(ctx)
+
 	// start for non-existant machine should fail
 	sr := &pb.StartRequest{Name: m.Name}	
 	_, err = s.Start(ctx, sr)

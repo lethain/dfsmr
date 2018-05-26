@@ -4,6 +4,11 @@ service DistributedFSMRunner {
 	rpc Define (DefineRequest) returns (DefineReply) {}
 	rpc Start (StartRequest) returns (AckReply) {}
 	rpc Changes (ChangesRequest) returns (stream ChangesReply) {}
+	rpc Machines (MachinesRequest) returns (MachinesReply) {}
+	// rpc Instances (InstancesRequest) returns (InstancesReply) {}
+	//rpc Transition (TransitionRequest) returns (TransitionReply) {}
+	//rpc Relinquish (RelinquishRequest) returns (RelinquishReply) {}
+	//rpc Ready (ReadyRequest) returns (ReadyReply) {}
 }
 
 message Transition {
@@ -27,6 +32,14 @@ message DefineReply {
 	string name = 2;
 	string successMessage = 3;	
 	string errorMessage = 4;
+}
+
+message MachinesRequest {
+
+}
+
+message MachinesReply {
+	repeated DefineRequest machines = 1;
 }
 
 
