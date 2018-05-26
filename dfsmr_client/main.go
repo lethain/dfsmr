@@ -5,6 +5,9 @@ import (
 	"log"
 	"time"
 	"io"
+	"os"
+	"fmt"
+	"strings"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -101,6 +104,19 @@ func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
 }
 
 func main() {
+	flag.Usage = func() {
+		cmds := []string{"start", "define", "changes"}
+		inCmdArr := []string{}
+		if len(os.Args) > 0 {
+			inCmdArr = os.Args[1:len(os.Args)]
+		}
+		inCmd := strings.Join(inCmdArr, " ")
+		validCmds := strings.Join(cmds, ", ")
+		
+		fmt.Fprintf(os.Stderr, "Specified command was: %v\nValid commands are: %v\n", inCmd, validCmds)
+		flag.PrintDefaults()
+	}
+		
 	flag.Parse()
 	args := flag.Args()
 	if len(args) == 0 {
@@ -119,5 +135,7 @@ func main() {
 		define(args, c)		
 	case "changes":
 		changes(grpcConn, c)
+	default:
+		flag.Usage()
 	}
 }

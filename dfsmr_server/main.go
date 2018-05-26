@@ -73,7 +73,6 @@ func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.Def
 }
 
 
-
 func (s *server) Changes(in *pb.ChangesRequest, stream pb.DistributedFSMRunner_ChangesServer) error {
 	for msg := range s.changes {
 		if err := stream.Send(msg); err != nil {
@@ -82,7 +81,6 @@ func (s *server) Changes(in *pb.ChangesRequest, stream pb.DistributedFSMRunner_C
 	}
 	return nil
 }
-
 
 func main() {
 	flag.Parse()
