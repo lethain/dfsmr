@@ -20,15 +20,16 @@ var (
 
 
 type server struct{
-	changes chan *pb.ChangesReply
+	listeners []chan *pb.ChangesReply
 	machines []*pb.DefineRequest
 	machinesMutex *sync.RWMutex
+	changesMutex *sync.RWMutex
 }
 
 func MakeServer() *server {
 	srv := &server{}
-	srv.changes = make(chan *pb.ChangesReply)
 	srv.machinesMutex = &sync.RWMutex{}
+	srv.changesMutex = &sync.RWMutex{}
 	return srv
 }
 
@@ -44,6 +45,26 @@ func (s *server) Machines() []*pb.DefineRequest {
 	return s.machines
 }
 
+func (s *server) changeListener() chan *pb.ChangesReply {
+	c := make(chan *pb.ChangesReply)
+	s.changesMutex.Lock()
+	s.listeners = append(s.listeners, c)
+	s.changesMutex.Unlock()
+	return c
+}
+
+func (s *server) closeChangeListener(c chan *pb.ChangesReply) {
+	s.changesMutex.Lock()
+	for i, cl := range s.listeners {
+		if cl == c {
+			s.listeners[i] = s.listeners[len(s.listeners) - 1]
+			s.listeners = s.listeners[:len(s.listeners)-1]
+			break
+		}
+	}
+	s.changesMutex.Unlock()
+	close(c)
+}
 
 func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 	client := "unknown"
@@ -52,7 +73,12 @@ func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 		client = p.Addr.Network() + "://" + p.Addr.String()
 	}
 	cmdStr := fmt.Sprintf("%s %+v", op, cmd)
-	s.changes <- &pb.ChangesReply{Command: cmdStr, Client: client}
+	cr := &pb.ChangesReply{Command: cmdStr, Client: client}
+	s.changesMutex.RLock()
+	defer s.changesMutex.RUnlock()
+	for _, lc := range s.listeners {
+		lc <- cr
+	}
 	return nil
 }
 
@@ -74,7 +100,9 @@ func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.Def
 
 
 func (s *server) Changes(in *pb.ChangesRequest, stream pb.DistributedFSMRunner_ChangesServer) error {
-	for msg := range s.changes {
+	c := s.changeListener()
+	defer s.closeChangeListener(c)
+	for msg := range c {
 		if err := stream.Send(msg); err != nil {
 			return err
 		}

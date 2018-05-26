@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	pb "github.com/lethain/dfsmr/dfsmr"
+	"golang.org/x/net/context"	
 	"github.com/lethain/dfsmr/machines"	
 )
 
@@ -33,9 +34,26 @@ func TestDefineMachine(t *testing.T) {
 	if m.Name != name {
 		t.Error("name should be ", name, "was ", m.Name)
 	}
-	
-	
+}
 
+func TestStart(t *testing.T) {
+	//path := "../crawl.fsm.yaml"
+
+	s := MakeServer()
+	sr := &pb.StartRequest{}
+
+	ctx := context.Background()
+	_, err := s.Start(ctx, sr)
+	if err == nil {
+		t.Error("Invalid start request, should have failed ", sr)
+	}
+
+	/*
+	m, err := machines.FromFile(path)
+	if err != nil {
+		t.Error("failed to load machine from ", path, err)
+	}
+*/
 	
 
 }
