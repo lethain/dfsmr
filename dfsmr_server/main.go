@@ -7,6 +7,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -38,8 +39,8 @@ func MakeServer() *server {
 
 func (s *server) RegisterMachine(newMachine *pb.DefineRequest) error {
 	s.machinesMutex.Lock()
-	if s.doesMachineExist(newMachine.Name, true) {
-		return fmt.Errorf("Machine %v is already registered", newMachine.Name)
+	if s.doesMachineExist(newMachine.Id, true) {
+		return fmt.Errorf("Machine %v is already registered", newMachine.Id)
 	}
 	s.machines = append(s.machines, newMachine)
 	s.machinesMutex.Unlock()
@@ -97,34 +98,44 @@ func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 	return nil
 }
 
-func (s *server) doesMachineExist(name string, hasLock bool) bool {
+func (s *server) doesMachineExist(id string, hasLock bool) bool {
 	if !hasLock {
 		s.machinesMutex.RLock()
 		defer s.machinesMutex.RUnlock()
 	}
 	for _, m := range s.machines {
-		if name == m.Name {
+		if id == m.Id {
 			return true
 		}
 	}
 	return false
 }
 
-func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.AckReply, error) {
-	if !s.doesMachineExist(in.Name, false) {
-		return nil, fmt.Errorf("No machine registered for %v", in.Name)
+func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.StartReply, error) {
+	if !s.doesMachineExist(in.Machine, false) {
+		return nil, fmt.Errorf("No machine registered for %v", in.Machine)
 	}
+	if in.Id == "" {
+		uid, err := uuid.NewV4()
+		if err != nil {
+			log.Printf("failed to generate uuid: %v", err)
+		} else {
+			in.Id = uid.String()
+		}
+	}
+
 	s.instancesMutex.Lock()
 	s.instances = append(s.instances, in)
 	s.instancesMutex.Unlock()	
 	if err := s.record(ctx, "Start", in); err != nil {
 		return nil, err
 	}
-	return &pb.AckReply{true, "Success", ""}, nil
+	sr := &pb.StartReply{Id: in.Id, Machine: in.Machine, StartTime: in.StartTime, Starts: in.Starts}
+	return sr, nil
 }
 
 func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.DefineReply, error) {
-	name := machine.Name
+	id := machine.Id
 	if err := s.record(ctx, "Define", machine); err != nil {
 		return nil, err
 	}
@@ -132,7 +143,7 @@ func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.Def
 	if err != nil {
 		return nil, err
 	}
-	return &pb.DefineReply{true, name, "Created machine.", ""}, nil
+	return &pb.DefineReply{true, id, "Created machine.", ""}, nil
 }
 
 

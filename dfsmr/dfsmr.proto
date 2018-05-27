@@ -2,7 +2,7 @@ syntax = "proto3";
 
 service DistributedFSMRunner {
 	rpc Define (DefineRequest) returns (DefineReply) {}
-	rpc Start (StartRequest) returns (AckReply) {}
+	rpc Start (StartRequest) returns (StartReply) {}
 	rpc Changes (ChangesRequest) returns (stream ChangesReply) {}
 	rpc Machines (MachinesRequest) returns (MachinesReply) {}
 	rpc Instances (InstancesRequest) returns (InstancesReply) {}
@@ -12,25 +12,25 @@ service DistributedFSMRunner {
 }
 
 message Transition {
-	string node = 1;
-	string name = 2;
+	string id = 1;
+	string node = 2;
 }
 
 message Node {
-	string name = 1;
+	string id = 1;
 	repeated Transition transitions = 2;
 }
 
 message DefineRequest {
-	string name = 1;
+	string id = 1;
 	repeated Node nodes = 2;
 }
 
 
 message DefineReply {
 	bool success = 1;
-	string name = 2;
-	string successMessage = 3;	
+	string id = 2;
+	string successMessage = 3;
 	string errorMessage = 4;
 }
 
@@ -43,13 +43,18 @@ message MachinesReply {
 }
 
 message StartRequest {
-	string name = 1;
+	string id = 1;
+	string machine = 2;
+	int32 startTime = 3;
+	int32 starts = 4;
 }
 
-message AckReply {
-	bool success = 1;
-	string successMessage = 2;
-	string errorMessage = 3;
+message StartReply {
+	string id = 1;
+	string machine = 2;
+	string node = 3;
+	int32 startTime = 4;
+	int32 starts = 5;
 }
 
 message InstancesRequest {
@@ -68,4 +73,3 @@ message ChangesReply {
 	string command = 1;
 	string client = 2;
 }
-

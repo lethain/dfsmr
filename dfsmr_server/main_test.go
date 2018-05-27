@@ -34,9 +34,9 @@ func TestDefineMachine(t *testing.T) {
 	if err != nil {
 		t.Error("failed to load machine from ", path, err)
 	}
-	name := "crawler"
-	if m.Name != name {
-		t.Error("name should be ", name, "was ", m.Name)
+	id := "crawler"
+	if m.Id != id {
+		t.Error("id should be ", id, "was ", m.Id)
 	}
 }
 
@@ -89,7 +89,7 @@ func TestStart(t *testing.T) {
 	//ms := s.Machines(ctx)
 
 	// start for non-existant machine should fail
-	sr := &pb.StartRequest{Name: m.Name}
+	sr := &pb.StartRequest{Id: m.Id}
 	_, err = s.Start(ctx, sr)
 	if err == nil {
 		t.Error("Invalid start request, should have failed ", sr)
@@ -110,7 +110,6 @@ func TestStart(t *testing.T) {
 		t.Error("shouldnt be any instances ", instances)
 	}
 	
-
 	// start should work for a registered machine
 	_, err = s.Start(ctx, sr)
 	if err != nil {

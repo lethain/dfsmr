@@ -16,7 +16,7 @@ type Node struct {
 }
 
 type Machine struct {
-	Name string `yaml:"name"`
+	Id string `yaml:"id"`
 	Nodes map[string]Node `yaml:"nodes"`
 }
 
@@ -36,14 +36,14 @@ func FromFile(filepath string) (*Machine, error) {
 
 func AsDefineRequest(m *Machine) *pb.DefineRequest {
 	nodes := make([]*pb.Node, 0)
-	for name, node := range m.Nodes {
+	for id, node := range m.Nodes {
 		transitions := make([]*pb.Transition, 0)
-		for name, transition := range node.Transitions {
-			t := &pb.Transition{Node: name, Name: transition}
+		for id, transition := range node.Transitions {
+			t := &pb.Transition{Id: id, Node: transition}
 			transitions = append(transitions, t)
 		}
-		n := &pb.Node{Name: name, Transitions: transitions}
+		n := &pb.Node{Id: id, Transitions: transitions}
 		nodes = append(nodes, n)
 	}
-	return &pb.DefineRequest{Name: m.Name, Nodes: nodes}
+	return &pb.DefineRequest{Id: m.Id, Nodes: nodes}
 }

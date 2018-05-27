@@ -1,4 +1,4 @@
-name: crawler
+id: crawler
 nodes:
   validate:
     input: "some type definition"
