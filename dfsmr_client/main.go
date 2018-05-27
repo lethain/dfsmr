@@ -50,9 +50,22 @@ func getMachines(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not retrieve machines: %v", err)
 	}
 	for _, m := range r.Machines {
-		log.Printf("%v:\t%v", m.Name, m.Nodes)
+		fmt.Printf("%v:\t%v", m.Name, m.Nodes)
 	}
 }
+
+func getInstances(args []string, c pb.DistributedFSMRunnerClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.Instances(ctx, &pb.InstancesRequest{})
+	if err != nil {
+		log.Fatalf("could not retrieve instances: %v", err)
+	}
+	for _, m := range r.Instances {
+		fmt.Printf("%v:\t%#v", m.Name, m)
+	}
+}
+
 
 func define(args []string, c pb.DistributedFSMRunnerClient) {
 	if len(args) < 2 {
@@ -115,7 +128,7 @@ func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
 
 func main() {
 	flag.Usage = func() {
-		cmds := []string{"start", "define", "changes", "machines"}
+		cmds := []string{"start", "define", "changes", "machines", "instances"}
 		inCmdArr := []string{}
 		if len(os.Args) > 0 {
 			inCmdArr = os.Args[1:len(os.Args)]
@@ -147,6 +160,8 @@ func main() {
 		changes(grpcConn, c)
 	case "machines":
 		getMachines(args, c)
+	case "instances":
+		getInstances(args, c)		
 	default:
 		flag.Usage()
 	}
