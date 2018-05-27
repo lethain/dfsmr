@@ -112,7 +112,7 @@ func (s *server) doesMachineExist(id string, hasLock bool) bool {
 }
 
 func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.StartReply, error) {
-	if !s.doesMachineExist(in.Machine, false) {
+	if !s.doesMachineExist(in.Id, false) {
 		return nil, fmt.Errorf("No machine registered for %v", in.Machine)
 	}
 	if in.Id == "" {
