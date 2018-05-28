@@ -180,3 +180,53 @@ func TestReady(t *testing.T) {
 		t.Error("ready should error if no tasks available ", tm)
 	}
 }
+
+func TestRelinquish(t *testing.T) {
+	path := "../crawl.fsm.yaml"
+	s := MakeServer()
+	ctx := context.Background()
+
+	// define crawler
+	m, err := machines.FromFile(path)
+	if err != nil {
+		t.Error("failed to load machine from ", path, err)
+	}
+	dr := machines.AsDefineRequest(m)
+	s.Define(ctx, dr)
+
+	// add task
+	taskId := "a"
+	sr := &pb.TaskMessage{Id: taskId, Machine: m.Id}
+	_, err = s.Start(ctx, sr)
+
+	rr := &pb.ReadyRequest{}
+	tm, err := s.Ready(ctx, rr)
+	tmId := tm.Id
+	if err != nil {
+		t.Error("should have retrieved task ", err)
+	} else if tm.Id != taskId {
+		t.Error("unexpected task id ", tm.Id, " is not ", taskId)
+	}
+
+	// all tasks are assigned, so ready should fail
+	tm, err = s.Ready(ctx, rr)
+	if err == nil {
+		t.Error("ready should error if no tasks available ", tm)
+	}
+
+	// relinquish task
+	rt := &pb.RelinquishRequest{Instance: tmId}
+	_, err = s.Relinquish(ctx, rt)
+
+	if err != nil {
+		t.Error("couldn't relinquish task: ", err)
+	}	
+
+	// relinquished task should be availble again
+	tm, err = s.Ready(ctx, rr)
+	if err != nil {
+		t.Error("should have retrieved task ", err)
+	} else if tm.Id != taskId {
+		t.Error("unexpected task id ", tm.Id, " is not ", taskId)
+	}
+}
