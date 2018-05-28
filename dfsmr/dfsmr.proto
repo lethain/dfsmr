@@ -2,13 +2,13 @@ syntax = "proto3";
 
 service DistributedFSMRunner {
 	rpc Define (DefineRequest) returns (DefineReply) {}
-	rpc Start (StartRequest) returns (StartReply) {}
+	rpc Start (TaskMessage) returns (TaskMessage) {}
+	rpc Ready (ReadyRequest) returns (TaskMessage) {}
 	rpc Changes (ChangesRequest) returns (stream ChangesReply) {}
 	rpc Machines (MachinesRequest) returns (MachinesReply) {}
 	rpc Instances (InstancesRequest) returns (InstancesReply) {}
 	//rpc Transition (TransitionRequest) returns (TransitionReply) {}
 	//rpc Relinquish (RelinquishRequest) returns (RelinquishReply) {}
-	//rpc Ready (ReadyRequest) returns (ReadyReply) {}
 }
 
 message Transition {
@@ -42,19 +42,20 @@ message MachinesReply {
 	repeated DefineRequest machines = 1;
 }
 
-message StartRequest {
-	string id = 1;
+message ReadyRequest {
+	string client = 1;
 	string machine = 2;
-	int32 startTime = 3;
-	int32 starts = 4;
+	string node = 3;
 }
 
-message StartReply {
+message TaskMessage {
 	string id = 1;
 	string machine = 2;
 	string node = 3;
 	int32 startTime = 4;
 	int32 starts = 5;
+	map<string, string> instanceParams = 6;
+	map<string, string> nodeParams = 7;
 }
 
 message InstancesRequest {
@@ -62,7 +63,7 @@ message InstancesRequest {
 }
 
 message InstancesReply {
-	repeated StartRequest instances = 1;
+	repeated TaskMessage instances = 1;
 }
 
 message ChangesRequest {

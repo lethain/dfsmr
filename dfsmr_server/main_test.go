@@ -89,7 +89,7 @@ func TestStart(t *testing.T) {
 	//ms := s.Machines(ctx)
 
 	// start for non-existant machine should fail
-	sr := &pb.StartRequest{Machine: m.Id}
+	sr := &pb.TaskMessage{Machine: m.Id}
 	_, err = s.Start(ctx, sr)
 	if err == nil {
 		t.Error("Invalid start request, should have failed ", sr)

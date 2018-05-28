@@ -25,7 +25,7 @@ type server struct{
 	changesMutex *sync.RWMutex	
 	machines []*pb.DefineRequest
 	machinesMutex *sync.RWMutex	
-	instances []*pb.StartRequest
+	instances []*pb.TaskMessage
 	instancesMutex *sync.RWMutex
 }
 
@@ -112,7 +112,7 @@ func (s *server) doesMachineExist(id string, hasLock bool) bool {
 	return false
 }
 
-func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.StartReply, error) {
+func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage, error) {
 	if !s.doesMachineExist(in.Machine, false) {
 		return nil, fmt.Errorf("No machine registered for %v", in.Machine)
 	}
@@ -131,8 +131,16 @@ func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.StartReply
 	if err := s.record(ctx, "Start", in); err != nil {
 		return nil, err
 	}
-	sr := &pb.StartReply{Id: in.Id, Machine: in.Machine, StartTime: in.StartTime, Starts: in.Starts}
-	return sr, nil
+	return in, nil
+}
+
+func (s *server) Ready(ctx context.Context, rr *pb.ReadyRequest) (*pb.TaskMessage, error) {
+	// scan instance for a ready instance meeting criteria, then return it.
+	// you would want a more sophisticated scheduling algorithm than this,
+	// maybe a priority queue based on start time and penalizing retries
+	log.Printf("client %v ready for work on %v, filtering node by %v", rr.Client, rr.Machine, rr.Node)
+
+	return nil, fmt.Errorf("no available work")
 }
 
 func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.DefineReply, error) {
