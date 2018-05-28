@@ -150,7 +150,7 @@ func TestReady(t *testing.T) {
 	taskId := "a"
 	sr := &pb.TaskMessage{Id: taskId, Machine: m.Id}
 	_, err = s.Start(ctx, sr)
-	
+
 	// invalid machine
 	rr = &pb.ReadyRequest{Machine: m.Id + "_test"}
 	tm, err = s.Ready(ctx, rr)
@@ -163,7 +163,7 @@ func TestReady(t *testing.T) {
 	tm, err = s.Ready(ctx, rr)
 	if err == nil {
 		t.Error("retrieving invalid node should fail ", tm)
-	}	
+	}
 
 	// task exists
 	rr = &pb.ReadyRequest{}
@@ -179,9 +179,4 @@ func TestReady(t *testing.T) {
 	if err == nil {
 		t.Error("ready should error if no tasks available ", tm)
 	}
-
-	// need relinquish to work, but basically we should relinquish here
-	// and then retrieve via machine filter, and then relinquish again
-	// and return via machine and node filter
-
 }
