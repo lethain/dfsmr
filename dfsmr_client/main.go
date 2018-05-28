@@ -36,7 +36,7 @@ func start(args []string, c pb.DistributedFSMRunnerClient) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.Start(ctx, &pb.StartRequest{Machine: id})
+	r, err := c.Start(ctx, &pb.TaskMessage{Machine: id})
 	if err != nil {
 		log.Fatalf("could not start: %v", err)
 	}
@@ -51,7 +51,7 @@ func getMachines(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not retrieve machines: %v", err)
 	}
 	for _, m := range r.Machines {
-		fmt.Printf("%v:\t%v", m.Id, m.Nodes)
+		fmt.Printf("%v:\t%v\n", m.Id, m.Nodes)
 	}
 }
 
@@ -63,7 +63,7 @@ func getInstances(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not retrieve instances: %v", err)
 	}
 	for _, m := range r.Instances {
-		fmt.Printf("%v:\t%#v", m.Id, m)
+		fmt.Printf("%v:\t%#v\n", m.Id, m)
 	}
 }
 
@@ -87,6 +87,23 @@ func define(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not define: %v", err)
 	}
 	log.Printf("Defined %v", r)
+}
+
+func ready(args []string, c pb.DistributedFSMRunnerClient) {
+	rr := &pb.ReadyRequest{}
+	if len(args) >= 2 {
+		rr.Machine = args[1]
+	}
+	if len(args) >= 2 {
+		rr.Node = args[2]
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	tm, err := c.Ready(ctx, rr)
+	if err != nil {
+		log.Fatalf("couldn't get task: %v", err)
+	}
+	fmt.Printf("%v\n", tm)
 }
 
 func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
@@ -115,7 +132,7 @@ func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
 			if streamErr != nil {
 				break
 			}
-			log.Printf("%v %v", change.Client, change.Command)
+			fmt.Printf("%v %v\n", change.Client, change.Command)
 		}
 
 		streamCode := status.Code(streamErr)
@@ -129,7 +146,7 @@ func changes(grpcConn *grpc.ClientConn, c pb.DistributedFSMRunnerClient) {
 
 func main() {
 	flag.Usage = func() {
-		cmds := []string{"start", "define", "changes", "machines", "instances"}
+		cmds := []string{"start", "define", "changes", "machines", "instances", "ready"}
 		inCmdArr := []string{}
 		if len(os.Args) > 0 {
 			inCmdArr = os.Args[1:len(os.Args)]
@@ -162,7 +179,9 @@ func main() {
 	case "machines":
 		getMachines(args, c)
 	case "instances":
-		getInstances(args, c)		
+		getInstances(args, c)
+	case "ready":
+		ready(args, c)
 	default:
 		flag.Usage()
 	}
