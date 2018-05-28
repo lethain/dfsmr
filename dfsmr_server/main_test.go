@@ -89,7 +89,7 @@ func TestStart(t *testing.T) {
 	//ms := s.Machines(ctx)
 
 	// start for non-existant machine should fail
-	sr := &pb.StartRequest{Id: m.Id}
+	sr := &pb.StartRequest{Machine: m.Id}
 	_, err = s.Start(ctx, sr)
 	if err == nil {
 		t.Error("Invalid start request, should have failed ", sr)
@@ -122,7 +122,7 @@ func TestStart(t *testing.T) {
 		t.Error("should be able to retrieve instance ", err)
 	}
 	if len(instances.Instances) != 1 {
-		t.Error("should be one instance ", instances)
+		t.Error("should be one instance ", instances.Instances)
 	}	
 
 

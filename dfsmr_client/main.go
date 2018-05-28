@@ -29,13 +29,14 @@ func client() (*grpc.ClientConn, pb.DistributedFSMRunnerClient, error) {
 }
 
 func start(args []string, c pb.DistributedFSMRunnerClient) {
-	name := "test-client"
-	if len(args) > 1 {
-		name = args[1]
+	if len(args) < 2 {
+		log.Fatalf("must specify a machine to start: %v", args)
 	}
+	id := args[1]
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.Start(ctx, &pb.StartRequest{Name: name})
+	r, err := c.Start(ctx, &pb.StartRequest{Machine: id})
 	if err != nil {
 		log.Fatalf("could not start: %v", err)
 	}
@@ -50,7 +51,7 @@ func getMachines(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not retrieve machines: %v", err)
 	}
 	for _, m := range r.Machines {
-		fmt.Printf("%v:\t%v", m.Name, m.Nodes)
+		fmt.Printf("%v:\t%v", m.Id, m.Nodes)
 	}
 }
 
@@ -62,7 +63,7 @@ func getInstances(args []string, c pb.DistributedFSMRunnerClient) {
 		log.Fatalf("could not retrieve instances: %v", err)
 	}
 	for _, m := range r.Instances {
-		fmt.Printf("%v:\t%#v", m.Name, m)
+		fmt.Printf("%v:\t%#v", m.Id, m)
 	}
 }
 

@@ -103,6 +103,7 @@ func (s *server) doesMachineExist(id string, hasLock bool) bool {
 		s.machinesMutex.RLock()
 		defer s.machinesMutex.RUnlock()
 	}
+	
 	for _, m := range s.machines {
 		if id == m.Id {
 			return true
@@ -112,16 +113,16 @@ func (s *server) doesMachineExist(id string, hasLock bool) bool {
 }
 
 func (s *server) Start(ctx context.Context, in *pb.StartRequest) (*pb.StartReply, error) {
-	if !s.doesMachineExist(in.Id, false) {
+	if !s.doesMachineExist(in.Machine, false) {
 		return nil, fmt.Errorf("No machine registered for %v", in.Machine)
 	}
+	
 	if in.Id == "" {
 		uid, err := uuid.NewV4()
 		if err != nil {
-			log.Printf("failed to generate uuid: %v", err)
-		} else {
-			in.Id = uid.String()
+			return nil, err
 		}
+		in.Id = uid.String()
 	}
 
 	s.instancesMutex.Lock()
