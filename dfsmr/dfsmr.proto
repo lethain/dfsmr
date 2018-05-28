@@ -7,8 +7,8 @@ service DistributedFSMRunner {
 	rpc Changes (ChangesRequest) returns (stream ChangesReply) {}
 	rpc Machines (MachinesRequest) returns (MachinesReply) {}
 	rpc Instances (InstancesRequest) returns (InstancesReply) {}
-	//rpc Transition (TransitionRequest) returns (TransitionReply) {}
-	//rpc Relinquish (RelinquishRequest) returns (RelinquishReply) {}
+	rpc Transition (TransitionRequest) returns (TransitionReply) {}
+	rpc Relinquish (RelinquishRequest) returns (RelinquishReply) {}
 }
 
 message Transition {
@@ -54,11 +54,32 @@ message TaskMessage {
 	string id = 1;
 	string machine = 2;
 	string node = 3;
-	string owner = 4;	
+	string owner = 4;
 	int32 startTime = 5;
 	int32 starts = 6;
 	map<string, string> instanceParams = 7;
 	map<string, string> nodeParams = 8;
+}
+
+message TransitionRequest {
+	string instance = 1;
+	string transition = 2;
+	map<string, string> nodeParams = 3;
+}
+
+message TransitionReply {
+	string instance = 1;
+	string node = 2;		
+	string prevNode = 3;
+}
+
+message RelinquishRequest {
+	string instance = 1;
+}
+
+message RelinquishReply {
+	string istance = 1;
+	string node = 2;
 }
 
 message InstancesRequest {

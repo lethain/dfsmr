@@ -107,7 +107,7 @@ func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 
 func (s *server) getMachine(id string) *pb.DefineRequest {
 	s.machinesMutex.RLock()
-	defer s.machinesMutex.RUnlock()	
+	defer s.machinesMutex.RUnlock()
 	for _, m := range s.machines {
 		if id == m.Id {
 			return m
@@ -124,6 +124,19 @@ func startNode(dr *pb.DefineRequest) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("machine %v does not specify a start node: %v", dr.Id, dr.Nodes)
+}
+
+func legalTransition(curr string, transition string, m *pb.DefineRequest) (bool, string) {
+	for _, node := range m.Nodes {
+		if node.Id == curr {
+			for _, t := range node.Transitions {
+				if t.Id == transition {
+					return true, t.Node
+				}
+			}
+		}
+	}
+	return false, ""
 }
 
 
@@ -149,6 +162,39 @@ func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage
 		return nil, err
 	}
 	return in, nil
+}
+
+func (s *server) Relinquish(ctx context.Context, rr *pb.RelinquishRequest) (*pb.RelinquishReply, error) {
+	client := determineClient(ctx, "")
+	log.Printf("client %v relinquishing %v", client, rr.Instance)
+	s.instancesMutex.RLock()
+	defer s.instancesMutex.RUnlock()
+	for _, instance := range s.instances {
+		if instance.Id == rr.Instance {
+			instance.Owner = ""
+			return &pb.RelinquishReply{instance.Id, instance.Node}, nil
+		}
+	}
+	return nil, fmt.Errorf("instance with id %v does not exist", rr.Instance)
+}
+
+func (s *server) Transition(ctx context.Context, tr *pb.TransitionRequest) (*pb.TransitionReply, error) {
+	client := determineClient(ctx, "")
+	log.Printf("client %v relinquishing %v", client, tr.Instance)
+	s.instancesMutex.RLock()
+	defer s.instancesMutex.RUnlock()
+	for _, instance := range s.instances {
+		if instance.Id == tr.Instance {
+			m := s.getMachine(instance.Machine)
+			ok, nextNode := legalTransition(instance.Node, tr.Transition, m)
+			if !ok {
+				return nil, fmt.Errorf("attempted illegal transition %v from %v in %v", tr.Transition, instance.Node, m.Id)
+			}
+			instance.Node = nextNode
+			instance.NodeParams = tr.NodeParams
+		}
+	}
+	return nil, fmt.Errorf("instance with id %v does not exist", tr.Instance)
 }
 
 func (s *server) Ready(ctx context.Context, rr *pb.ReadyRequest) (*pb.TaskMessage, error) {
@@ -188,7 +234,7 @@ func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.Def
 	if s.getMachine(machine.Id) != nil {
 		return nil, fmt.Errorf("Machine %v is already registered", machine.Id)
 	}
-	
+
 	_, err := startNode(machine)
 	if err != nil {
 		return nil, err
