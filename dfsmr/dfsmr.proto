@@ -19,6 +19,8 @@ message Transition {
 message Node {
 	string id = 1;
 	repeated Transition transitions = 2;
+	bool start = 3;
+	bool final = 4;
 }
 
 message DefineRequest {

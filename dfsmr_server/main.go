@@ -124,9 +124,20 @@ func (s *server) getMachine(id string) *pb.DefineRequest {
 	return m
 }
 
+// Determine the starting node for a given state machine
+func startNode(dr *pb.DefineRequest) (string, error) {
+	for _, node := range dr.Nodes {
+		if node.Start == true {
+			return node.Id, nil
+		}
+	}
+	return "", fmt.Errorf("machine %v does not specify a start node: %v", dr.Id, dr.Nodes)
+}
+
 
 func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage, error) {
-	if s.getMachine(in.Machine) == nil {
+	m := s.getMachine(in.Machine)
+	if m == nil {
 		return nil, fmt.Errorf("No machine registered for %v", in.Machine)
 	}
 
@@ -137,6 +148,7 @@ func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage
 		}
 		in.Id = uid.String()
 	}
+	in.Node, _ = startNode(m)
 
 	s.instancesMutex.Lock()
 	s.instances = append(s.instances, in)
@@ -181,10 +193,14 @@ func (s *server) Ready(ctx context.Context, rr *pb.ReadyRequest) (*pb.TaskMessag
 
 func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.DefineReply, error) {
 	id := machine.Id
+	_, err := startNode(machine)
+	if err != nil {
+		return nil, err
+	}
 	if err := s.record(ctx, "Define", machine); err != nil {
 		return nil, err
 	}
-	err := s.RegisterMachine(machine)
+	err = s.RegisterMachine(machine)
 	if err != nil {
 		return nil, err
 	}

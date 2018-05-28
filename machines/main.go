@@ -2,16 +2,16 @@ package machines
 
 import (
 	"io/ioutil"
-	
+
 	"gopkg.in/yaml.v2"
 
-	pb "github.com/lethain/dfsmr/dfsmr"	
+	pb "github.com/lethain/dfsmr/dfsmr"
 )
 
 
 type Node struct {
-	Input string `yaml:"input"`
 	Transitions map[string]string `yaml:"transitions"`
+	Start bool `yaml:"start"`
 	Final bool `yaml:"final"`
 }
 
@@ -21,7 +21,7 @@ type Machine struct {
 }
 
 func FromYAML(data []byte) (*Machine, error) {
-	m := &Machine{}	
+	m := &Machine{}
 	err := yaml.Unmarshal(data, m)
 	return m, err
 }
@@ -42,7 +42,7 @@ func AsDefineRequest(m *Machine) *pb.DefineRequest {
 			t := &pb.Transition{Id: id, Node: transition}
 			transitions = append(transitions, t)
 		}
-		n := &pb.Node{Id: id, Transitions: transitions}
+		n := &pb.Node{Id: id, Transitions: transitions, Final: node.Final, Start: node.Start}
 		nodes = append(nodes, n)
 	}
 	return &pb.DefineRequest{Id: m.Id, Nodes: nodes}

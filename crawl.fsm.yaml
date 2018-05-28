@@ -1,20 +1,16 @@
 id: crawler
 nodes:
   validate:
-    input: "some type definition"
     transitions:
       ok: crawl
       error: failed
   failed:
-    input: "some type"
     final: true
   crawl:
-    input: "etc"
+    start: true
     transitions:
       ok: success
       retry: wait
   success:
-    input: "etc"
-    # nodes with no transitions are implicitly final
     final: true
       
