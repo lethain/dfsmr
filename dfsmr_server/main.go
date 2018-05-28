@@ -38,7 +38,7 @@ func MakeServer() *server {
 
 func (s *server) RegisterMachine(newMachine *pb.DefineRequest) error {
 	s.machinesMutex.Lock()
-	if s.doesMachineExist(newMachine.Id, true) {
+	if s.getMachineWithoutLock(newMachine.Id) != nil {
 		return fmt.Errorf("Machine %v is already registered", newMachine.Id)
 	}
 	s.machines = append(s.machines, newMachine)
@@ -108,22 +108,25 @@ func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
 	return nil
 }
 
-func (s *server) doesMachineExist(id string, hasLock bool) bool {
-	if !hasLock {
-		s.machinesMutex.RLock()
-		defer s.machinesMutex.RUnlock()
-	}
-
+func (s *server) getMachineWithoutLock(id string) *pb.DefineRequest {
 	for _, m := range s.machines {
 		if id == m.Id {
-			return true
+			return m
 		}
 	}
-	return false
+	return nil
 }
 
+func (s *server) getMachine(id string) *pb.DefineRequest {
+	s.machinesMutex.RLock()
+	m := s.getMachineWithoutLock(id)
+	s.machinesMutex.RUnlock()
+	return m
+}
+
+
 func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage, error) {
-	if !s.doesMachineExist(in.Machine, false) {
+	if s.getMachine(in.Machine) == nil {
 		return nil, fmt.Errorf("No machine registered for %v", in.Machine)
 	}
 
