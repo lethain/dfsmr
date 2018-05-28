@@ -67,8 +67,6 @@ func TestMachines(t *testing.T) {
 	if len(ms.Machines) != 1 {
 		t.Error("shouldn't be any registered machines: ", ms.Machines)
 	}
-
-
 }
 
 func TestStart(t *testing.T) {
@@ -109,7 +107,7 @@ func TestStart(t *testing.T) {
 	if len(instances.Instances) != 0 {
 		t.Error("shouldnt be any instances ", instances)
 	}
-	
+
 	// start should work for a registered machine
 	_, err = s.Start(ctx, sr)
 	if err != nil {
@@ -123,7 +121,67 @@ func TestStart(t *testing.T) {
 	}
 	if len(instances.Instances) != 1 {
 		t.Error("should be one instance ", instances.Instances)
+	}
+
+
+}
+
+func TestReady(t *testing.T) {
+	path := "../crawl.fsm.yaml"
+	s := MakeServer()
+	ctx := context.Background()
+
+	// define crawler
+	m, err := machines.FromFile(path)
+	if err != nil {
+		t.Error("failed to load machine from ", path, err)
+	}
+	dr := machines.AsDefineRequest(m)
+	s.Define(ctx, dr)
+
+	// no tasks
+	rr := &pb.ReadyRequest{}
+	tm, err := s.Ready(ctx, rr)
+	if err == nil {
+		t.Error("ready should error if no tasks available ", tm)
+	}
+
+	// add task
+	taskId := "a"
+	sr := &pb.TaskMessage{Id: taskId, Machine: m.Id}
+	_, err = s.Start(ctx, sr)
+	
+	// invalid machine
+	rr = &pb.ReadyRequest{Machine: m.Id + "_test"}
+	tm, err = s.Ready(ctx, rr)
+	if err == nil {
+		t.Error("retrieving invalid machine should fail ", tm)
+	}
+
+	// invalid node
+	rr = &pb.ReadyRequest{Machine: m.Id, Node: "fake"}
+	tm, err = s.Ready(ctx, rr)
+	if err == nil {
+		t.Error("retrieving invalid node should fail ", tm)
 	}	
 
+	// task exists
+	rr = &pb.ReadyRequest{}
+	tm, err = s.Ready(ctx, rr)
+	if err != nil {
+		t.Error("should have retrieved task ", err)
+	} else if tm.Id != taskId {
+		t.Error("unexpected task id ", tm.Id, " is not ", taskId)
+	}
+
+	// all tasks are assigned, so ready should fail
+	tm, err = s.Ready(ctx, rr)
+	if err == nil {
+		t.Error("ready should error if no tasks available ", tm)
+	}
+
+	// need relinquish to work, but basically we should relinquish here
+	// and then retrieve via machine filter, and then relinquish again
+	// and return via machine and node filter
 
 }

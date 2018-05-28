@@ -52,10 +52,11 @@ message TaskMessage {
 	string id = 1;
 	string machine = 2;
 	string node = 3;
-	int32 startTime = 4;
-	int32 starts = 5;
-	map<string, string> instanceParams = 6;
-	map<string, string> nodeParams = 7;
+	string owner = 4;	
+	int32 startTime = 5;
+	int32 starts = 6;
+	map<string, string> instanceParams = 7;
+	map<string, string> nodeParams = 8;
 }
 
 message InstancesRequest {

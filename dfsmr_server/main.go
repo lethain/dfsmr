@@ -19,12 +19,11 @@ var (
 	addr = flag.String("addr", ":5003", "Port to bind on")
 )
 
-
 type server struct{
 	listeners []chan *pb.ChangesReply
-	changesMutex *sync.RWMutex	
+	changesMutex *sync.RWMutex
 	machines []*pb.DefineRequest
-	machinesMutex *sync.RWMutex	
+	machinesMutex *sync.RWMutex
 	instances []*pb.TaskMessage
 	instancesMutex *sync.RWMutex
 }
@@ -82,12 +81,23 @@ func (s *server) closeChangeListener(c chan *pb.ChangesReply) {
 	close(c)
 }
 
-func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
-	client := "unknown"
+func determineClient(ctx context.Context, supplied string) string {
+	if supplied != "" {
+		return supplied
+	}
 	p, ok := peer.FromContext(ctx)
 	if ok {
-		client = p.Addr.Network() + "://" + p.Addr.String()
+		return p.Addr.Network() + "://" + p.Addr.String()
 	}
+	uid, err := uuid.NewV4()
+	if err != nil {
+		return "invalid-client"
+	}
+	return uid.String()
+}
+
+func (s *server) record(ctx context.Context, op string, cmd interface{}) error {
+	client := determineClient(ctx, "")
 	cmdStr := fmt.Sprintf("%s %+v", op, cmd)
 	cr := &pb.ChangesReply{Command: cmdStr, Client: client}
 	s.changesMutex.RLock()
@@ -103,7 +113,7 @@ func (s *server) doesMachineExist(id string, hasLock bool) bool {
 		s.machinesMutex.RLock()
 		defer s.machinesMutex.RUnlock()
 	}
-	
+
 	for _, m := range s.machines {
 		if id == m.Id {
 			return true
@@ -116,7 +126,7 @@ func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage
 	if !s.doesMachineExist(in.Machine, false) {
 		return nil, fmt.Errorf("No machine registered for %v", in.Machine)
 	}
-	
+
 	if in.Id == "" {
 		uid, err := uuid.NewV4()
 		if err != nil {
@@ -127,7 +137,7 @@ func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage
 
 	s.instancesMutex.Lock()
 	s.instances = append(s.instances, in)
-	s.instancesMutex.Unlock()	
+	s.instancesMutex.Unlock()
 	if err := s.record(ctx, "Start", in); err != nil {
 		return nil, err
 	}
@@ -138,8 +148,31 @@ func (s *server) Ready(ctx context.Context, rr *pb.ReadyRequest) (*pb.TaskMessag
 	// scan instance for a ready instance meeting criteria, then return it.
 	// you would want a more sophisticated scheduling algorithm than this,
 	// maybe a priority queue based on start time and penalizing retries
-	log.Printf("client %v ready for work on %v, filtering node by %v", rr.Client, rr.Machine, rr.Node)
+	rr.Client = determineClient(ctx, rr.Client)
+	machine := rr.Machine
+	if machine == "" {
+		machine = "any machine"
+	}
+	node := rr.Node
+	if node == "" {
+		node = "any node"
+	}
+	log.Printf("client %v ready for work on %v, filtering node by %v", rr.Client, machine, node)
 
+	s.instancesMutex.RLock()
+	defer s.instancesMutex.RUnlock()
+	for _, instance := range s.instances {
+		if rr.Machine != "" && rr.Machine != instance.Machine {
+			continue
+		}
+		if rr.Node != "" && rr.Node != instance.Node {
+			continue
+		}
+		if instance.Owner == "" {
+			instance.Owner = rr.Client
+			return instance, nil
+		}
+	}
 	return nil, fmt.Errorf("no available work")
 }
 
