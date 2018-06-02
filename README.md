@@ -136,7 +136,7 @@ and is useful for debugging / understanding what's happening.
 
 ## Commands
 
-[See the grpc definition for all commands.](./blob/master/dfsmr/dfsmr.proto)
+[See the grpc definition for all commands.](./dfsmr/dfsmr.proto)
 
 # Unimplemented ideas for extension
 
