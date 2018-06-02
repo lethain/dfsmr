@@ -207,11 +207,35 @@ func TestTransition(t *testing.T) {
 	if tm.Node != startState {
 		t.Error("should be in ", startState, " but is in ", tm.Node)
 	}
-	// transition crawl-{error}->wait
-	// wait-{ok}->crawl
-	// transition crawl-{ok}->success
 
+	treq := &pb.TransitionRequest{Instance: tm.Id, Transition: "fake"}
+	_, err = s.Transition(ctx, treq)
+	if err == nil {
+		t.Error("should have received error for fake transition, ", err)
+	}
 
+	treq.Transition = "error"
+	trep, err := s.Transition(ctx, treq)
+
+	if err != nil {
+		t.Error("legal transition failed, ", err)
+	}
+	if trep.PrevNode != startState {
+		t.Error("prevNode should be ", startState, " but was ", trep.PrevNode)
+	}
+	nextNode := "wait"
+	if trep.Node != nextNode {
+		t.Error("current node should be ", nextNode, " but is ", trep.Node)
+	}
+
+	treq.Transition = "ok"
+	s.Transition(ctx, treq)
+	treq.Transition = "ok"	
+	trep, _ = s.Transition(ctx, treq)
+	finalNode := "success"
+	if trep.Node != finalNode {
+		t.Error("current node should be ", finalNode, " but is ", trep.Node)
+	}
 }
 
 func TestRelinquish(t *testing.T) {

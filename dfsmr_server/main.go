@@ -190,8 +190,10 @@ func (s *server) Transition(ctx context.Context, tr *pb.TransitionRequest) (*pb.
 			if !ok {
 				return nil, fmt.Errorf("attempted illegal transition %v from %v in %v", tr.Transition, instance.Node, m.Id)
 			}
+			prevNode := instance.Node
 			instance.Node = nextNode
 			instance.NodeParams = tr.NodeParams
+			return &pb.TransitionReply{Instance: tr.Instance, Node: nextNode, PrevNode: prevNode}, nil
 		}
 	}
 	return nil, fmt.Errorf("instance with id %v does not exist", tr.Instance)
