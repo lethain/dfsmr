@@ -94,6 +94,12 @@ long term I think you'd want to enforce a single protobuf definition that must b
 used across every transition in a state machine, but I decided to punt on that
 given this is only an experiment. :)
 
+## Running tests
+
+Run tests via:
+
+    make test_server
+
 ## Running server
 
 Building the server is:
