@@ -1,17 +1,17 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"sync"
 
+	pb "github.com/lethain/dfsmr/dfsmr"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
-	pb "github.com/lethain/dfsmr/dfsmr"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -19,12 +19,12 @@ var (
 	addr = flag.String("addr", ":5003", "Port to bind on")
 )
 
-type server struct{
-	listeners []chan *pb.ChangesReply
-	changesMutex *sync.RWMutex
-	machines []*pb.DefineRequest
-	machinesMutex *sync.RWMutex
-	instances []*pb.TaskMessage
+type server struct {
+	listeners      []chan *pb.ChangesReply
+	changesMutex   *sync.RWMutex
+	machines       []*pb.DefineRequest
+	machinesMutex  *sync.RWMutex
+	instances      []*pb.TaskMessage
 	instancesMutex *sync.RWMutex
 }
 
@@ -69,7 +69,7 @@ func (s *server) closeChangeListener(c chan *pb.ChangesReply) {
 	s.changesMutex.Lock()
 	for i, cl := range s.listeners {
 		if cl == c {
-			s.listeners[i] = s.listeners[len(s.listeners) - 1]
+			s.listeners[i] = s.listeners[len(s.listeners)-1]
 			s.listeners = s.listeners[:len(s.listeners)-1]
 			break
 		}
@@ -138,7 +138,6 @@ func legalTransition(curr string, transition string, m *pb.DefineRequest) (bool,
 	}
 	return false, ""
 }
-
 
 func (s *server) Start(ctx context.Context, in *pb.TaskMessage) (*pb.TaskMessage, error) {
 	m := s.getMachine(in.Machine)
@@ -250,7 +249,6 @@ func (s *server) Define(ctx context.Context, machine *pb.DefineRequest) (*pb.Def
 	}
 	return &pb.DefineReply{true, id, "Created machine.", ""}, nil
 }
-
 
 func (s *server) Changes(in *pb.ChangesRequest, stream pb.DistributedFSMRunner_ChangesServer) error {
 	c := s.changeListener()

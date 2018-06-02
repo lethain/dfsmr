@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	pb "github.com/lethain/dfsmr/dfsmr"
-	"golang.org/x/net/context"
 	"github.com/lethain/dfsmr/machines"
+	"golang.org/x/net/context"
 )
 
 func TestRegisterMachine(t *testing.T) {
@@ -123,7 +123,6 @@ func TestStart(t *testing.T) {
 		t.Error("should be one instance ", instances.Instances)
 	}
 
-
 }
 
 func TestReady(t *testing.T) {
@@ -230,7 +229,7 @@ func TestTransition(t *testing.T) {
 
 	treq.Transition = "ok"
 	s.Transition(ctx, treq)
-	treq.Transition = "ok"	
+	treq.Transition = "ok"
 	trep, _ = s.Transition(ctx, treq)
 	finalNode := "success"
 	if trep.Node != finalNode {
@@ -277,7 +276,7 @@ func TestRelinquish(t *testing.T) {
 
 	if err != nil {
 		t.Error("couldn't relinquish task: ", err)
-	}	
+	}
 
 	// relinquished task should be availble again
 	tm, err = s.Ready(ctx, rr)

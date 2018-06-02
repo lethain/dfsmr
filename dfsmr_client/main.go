@@ -2,20 +2,20 @@ package main
 
 import (
 	"flag"
-	"log"
-	"time"
-	"io"
-	"os"
 	"fmt"
+	"io"
+	"log"
+	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	"github.com/lethain/dfsmr/machines"
 	pb "github.com/lethain/dfsmr/dfsmr"
+	"github.com/lethain/dfsmr/machines"
 )
 
 var (
@@ -66,7 +66,6 @@ func getInstances(args []string, c pb.DistributedFSMRunnerClient) {
 		fmt.Printf("%v:\t%#v\n", m.Id, m)
 	}
 }
-
 
 func define(args []string, c pb.DistributedFSMRunnerClient) {
 	if len(args) < 2 {

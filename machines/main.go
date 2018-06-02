@@ -8,15 +8,14 @@ import (
 	pb "github.com/lethain/dfsmr/dfsmr"
 )
 
-
 type Node struct {
 	Transitions map[string]string `yaml:"transitions"`
-	Start bool `yaml:"start"`
-	Final bool `yaml:"final"`
+	Start       bool              `yaml:"start"`
+	Final       bool              `yaml:"final"`
 }
 
 type Machine struct {
-	Id string `yaml:"id"`
+	Id    string          `yaml:"id"`
 	Nodes map[string]Node `yaml:"nodes"`
 }
 
