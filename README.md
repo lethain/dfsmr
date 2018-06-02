@@ -95,6 +95,10 @@ long term I think you'd want to enforce a single protobuf definition that must b
 used across every transition in a state machine, but I decided to punt on that
 given this is only an experiment. :)
 
+## Commands
+
+[See the grpc definition for all commands.](./dfsmr/dfsmr.proto)
+
 ## Running tests
 
 Run tests via:
@@ -132,11 +136,6 @@ Using the client is:
 
 The `Changes` endpoint and command are inspired by [Redis' MONITOR command](https://redis.io/commands/monitor)
 and is useful for debugging / understanding what's happening.
-
-
-## Commands
-
-[See the grpc definition for all commands.](./dfsmr/dfsmr.proto)
 
 # Unimplemented ideas for extension
 
