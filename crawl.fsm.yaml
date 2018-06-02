@@ -1,16 +1,12 @@
 id: crawler
 nodes:
-  validate:
-    transitions:
-      ok: crawl
-      error: failed
-  failed:
-    final: true
   crawl:
     start: true
     transitions:
       ok: success
-      retry: wait
+      error: wait
+  wait:
+    transitions:
+      ok: crawl
   success:
     final: true
-      

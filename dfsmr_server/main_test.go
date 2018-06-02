@@ -181,6 +181,39 @@ func TestReady(t *testing.T) {
 	}
 }
 
+func TestTransition(t *testing.T) {
+	path := "../crawl.fsm.yaml"
+	s := MakeServer()
+	ctx := context.Background()
+
+	// define crawler
+	m, err := machines.FromFile(path)
+	if err != nil {
+		t.Error("failed to load machine from ", path, err)
+	}
+	dr := machines.AsDefineRequest(m)
+	s.Define(ctx, dr)
+
+	// add task
+	taskId := "a"
+	sr := &pb.TaskMessage{Id: taskId, Machine: m.Id}
+	_, err = s.Start(ctx, sr)
+
+	// get request
+	rr := &pb.ReadyRequest{}
+	tm, err := s.Ready(ctx, rr)
+
+	startState := "crawl"
+	if tm.Node != startState {
+		t.Error("should be in ", startState, " but is in ", tm.Node)
+	}
+	// transition crawl-{error}->wait
+	// wait-{ok}->crawl
+	// transition crawl-{ok}->success
+
+
+}
+
 func TestRelinquish(t *testing.T) {
 	path := "../crawl.fsm.yaml"
 	s := MakeServer()

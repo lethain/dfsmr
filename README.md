@@ -1,16 +1,140 @@
 
-Vocabulary:
-- Machine: a defined finite state machine, including its nodes, transitions, inputs and configuration
-- Instance: is a specific invocation of a Machine, triggered by `start` command
-- Worker: external process that calls the `ready` command to request work
+# dfsmr
+
+`dfsmr` or Distributed Finite State Machine Runner is an experiment in interface design
+for what an expressive, modern distributed task management system might look like. Worth
+repeating again, this is an *experiment* in *interface design*. The implementation works,
+but only to extent necessary to exercise the interfaces, and is no way performant, reliable,
+etc.
+
+Most modern task systems such as RabbitMQ or Celery focus on queuing tasks and having a
+distributed fleet of consumers pull down tasks. This works remarkably well, but also offloads
+expressing task workflow to the applications themselves. If you want sophisticated workflows,
+you end up in a parallel universe of tools like Airflow, which are excellent but heavy and designed
+to coordinate batch workflows rather than task workflows.
+
+`dfsmr` envisions a world where you could have performant, expressive task workflows, represented
+as a fleet of finite state machines, similar to [Erlang's gen_fsm](http://erlang.org/doc/man/gen_fsm.html),
+but with instances and transitions coordinated and enforced by a centralized system.
+
+You start by defining a *machine*, which defines any number of nodes and transitions that comprise your
+state machine. Machine definitions are written in YAML, for example:
+
+```
+id: crawler
+nodes:
+  crawl:
+    start: true
+    transitions:
+      ok: success
+      error: wait
+  wait:
+    transitions:
+      ok: crawl
+  success:
+    final: true
+```
+
+Once you've defined the machine, you load it via the `Define` endpoint
+or the `dcli` command line tool:
+
+```
+dcli define ./crawl.fsm.yaml
+```
+
+Once defined, you can list all machines via:
+
+```
+dcli machines
+```
+
+Next, you'll want to create an *instance* of the *machine*, which is instantiating the
+machine with a set of input parameters. This is done via the `Start` endpoint.
+Each instance has a unique identifier, is passed zero or more key-value pairs as initial inputs.
+
+```
+dcli start crawler
+# TODO: should be able to pass key-value pairs via dcli, although
+# if you call the grpc endpoint directly, you can indeed do this!
+``
+
+Once the instance is created, you can list all instances and their states via:
+
+```
+dcli instances
+```
+
+At this point consumers are able to retrieve instances and perform work on them.
+As a consumer, you can request any available instance, or you can choose to filter
+by machine or current node. For example if you wanted a dedicated crawler consumer
+that only performed crawl operations, you'd do so via
+
+```
+dcli ready crawler crawl
+```
+
+If you wanted any instance ready for work, you'd simply:
+
+```
+dcli ready
+```
+
+Once you've performed work for a given node, you update the node by
+signaling a transition via the `Transition` endpoint. After each transition,
+you can supply a new set of key-value pairs for the next node.
+
+Somewhat interestingly, a consumer performing the work doesn't need to be
+aware of the next node in the state machine, although it does need to be
+aware of the transition. For example, you might signal the `ok` transition,
+which `dfsm` applies to the machine definition to move the instance into
+the `success` node, but you could seamlessly insert another validation step
+in without requiring the consumer to update its logic. (There is some complexity
+here around ensuring the input key-value pairs don't leak state transition logic,
+long term I think you'd want to enforce a single protobuf definition that must be
+used across every transition in a state machine, but I decided to punt on that
+given this is only an experiment. :)
+
+## Running server
+
+Building the server is:
+
+    dep ensure
+    make server
+
+Running the server is:
+
+    ./dsrv
+    ./dsrv --addr :3004
+
+## Using client
+
+Building the client is as simple as:
+
+    dep ensure
+    make client
+
+Using the client is:
+
+    $ ./dcli start
+    2018/04/29 08:40:51 Started success:true successMessage:"Success"
+
+    $ ./dsrv --addr :3004 start
+    2018/04/29 08:40:51 Started success:true successMessage:"Success"    
+
+    $ ./dcli changes
+
+The `Changes` endpoint and command are inspired by [Redis' MONITOR command](https://redis.io/commands/monitor)
+and is useful for debugging / understanding what's happening.
+
 
 ## Commands
 
-* Define: machine_config
-* Start: machine, id, context
-* Transition: id, transition, input
-* Relinquish: id
-* Ready: machine, allowed_transitions, max_batch_size
+[See the grpc definition for all commands.](./blob/master/dfsmr/dfsmr.proto)
+
+# Unimplemented ideas for extension
+
+This section discusses some ideas for implementing some interesting aspects
+of what I think a production version of this would need to address.
 
 ## Handling instance failure: timeouts and retries
 
@@ -132,38 +256,3 @@ there are also these system nodes added to every machine:
     for reprocessing
 
 
-# Running `dfsmr`
-
-two modes:
-1. standalone local mode, uses leveldb for storage, no other dependencies
-2. distributed mode, uses Kafka
-
-## Running server
-
-Building the server is:
-
-    dep ensure
-    make server
-
-Running the server is:
-
-    ./dsrv
-    ./dsrv --addr :3004
-
-
-## Using client
-
-Building the client is as simple as:
-
-    dep ensure
-    make client
-
-Using the client is:
-
-    $ ./dcli start
-    2018/04/29 08:40:51 Started success:true successMessage:"Success"
-
-    $ ./dsrv --addr :3004 start
-    2018/04/29 08:40:51 Started success:true successMessage:"Success"    
-
-    $ ./dcli changes
