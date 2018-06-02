@@ -7,7 +7,8 @@ repeating again, this is an *experiment* in *interface design*. The implementati
 but only to extent necessary to exercise the interfaces, and is no way performant, reliable,
 etc.
 
-Most modern task systems such as RabbitMQ or Celery focus on queuing tasks and having a
+Most modern task systems such as [RabbitMQ](https://www.rabbitmq.com/) or [Celery](http://www.celeryproject.org/)
+focus on queuing tasks and having a
 distributed fleet of consumers pull down tasks. This works remarkably well, but also offloads
 expressing task workflow to the applications themselves. If you want sophisticated workflows,
 you end up in a parallel universe of tools like Airflow, which are excellent but heavy and designed
@@ -56,7 +57,7 @@ Each instance has a unique identifier, is passed zero or more key-value pairs as
 dcli start crawler
 # TODO: should be able to pass key-value pairs via dcli, although
 # if you call the grpc endpoint directly, you can indeed do this!
-``
+```
 
 Once the instance is created, you can list all instances and their states via:
 
